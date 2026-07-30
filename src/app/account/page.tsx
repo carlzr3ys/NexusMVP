@@ -1,11 +1,16 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import type { Prisma } from "@prisma/client";
 
 import { PageContainer } from "@/components/ui/page-container";
 import { PageHeader } from "@/components/ui/page-header";
 import { getSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma";
 import { bookingStatusLabel, formatMoney } from "@/lib/utils";
+
+type AccountBooking = Prisma.BookingGetPayload<{
+  include: { quote: true; invoice: true; pod: true };
+}>;
 
 export default async function AccountPage() {
   const session = await getSession();
@@ -15,7 +20,7 @@ export default async function AccountPage() {
     where: { userId: session.id },
   });
 
-  const bookings = await prisma.booking.findMany({
+  const bookings: AccountBooking[] = await prisma.booking.findMany({
     where: customer ? { customerId: customer.id } : { contactEmail: session.email },
     include: { quote: true, invoice: true, pod: true },
     orderBy: { createdAt: "desc" },
